@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.8/socket.io.min.js"></script>
+	
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+
+    <meta charset="UTF-8">
+
+    <title>Chat App 2 Login</title>
+
+</head>
+
+<style type="text/css">
+	
+	body{
+
+		background-color: #252d41;
+
+	}
+
+	button{
+
+		color: black;
+
+	}
+
+	.Buttons{
+
+		border-radius: 12px;
+
+		width: 100px;
+
+		height: 30px;
+
+	}
+
+	.Fields{
+
+		width: 300px;
+
+		height: 30px;
+
+		border-radius: 15px;
+
+	}
+
+	.Log_In{
+
+		position: absolute;
+
+		left: 400px;
+
+		top: 400px;
+
+	}
+
+	.Sign_Up{
+
+		position: absolute;
+
+		left: 400px;
+
+		top: 540px;
+
+	}
+
+	#Username_Sign_Up_Label{
+
+		padding-left: 300px;
+
+		font-size: 20pt;
+
+		color: #ae002c;
+
+	}
+
+	#Password_Sign_Up_Label{
+
+		padding-left: 200px;
+
+		font-size: 20pt;
+
+		color: #ae002c;
+
+	}
+
+	#Username_Sign_In_Label{
+
+		padding-left: 300px;
+
+		font-size: 20pt;
+
+		color: #007608;
+
+	}
+
+	#Password_Sign_In_Label{
+
+		padding-left: 200px;
+
+		font-size: 20pt;
+
+		color: #007608;
+
+	}
+
+
+	#Label_Sign_In{
+
+		position: relative;
+
+		font-size: 40pt;
+
+		color: #007608;
+
+	}
+
+	#Label_Sign_Up{
+
+		position: relative;
+
+		font-size: 40pt;
+
+		color: #ae002c;
+
+	}
+
+	#Notice{
+
+		position: relative;
+
+		font-size: 20pt;
+
+		top: 40px;
+
+		left: 100px;
+
+	}
+
+	#Username{
+
+		margin-left: 45px;
+
+	}
+
+	#Welcome{
+
+		position: absolute;
+
+		margin-left: 36vw;
+
+		margin-top: 200px;
+
+		font-size: 100px;
+
+		color: #c0c0c0;
+
+	}
+
+
+</style>
+
+<body>
+
+	<label id="Welcome">Welcome!</label>
+
+	<div class="Log_In">
+
+	<label id = "Username_Sign_In_Label">Username</label>
+
+    <label id = "Password_Sign_In_Label">Password</label>
+
+    <br>
+
+	<label id="Label_Sign_In">Log In:</label>
+
+    <input type="text" id="Username" class="Fields">
+
+    <input type="password" id="Password" class="Fields">
+
+    <button onclick="Log_In()" class="Buttons" id="Sign_In">Sign In</button>
+
+	</div>
+
+    <br>
+
+    <br>
+
+    <div class="Sign_Up">
+
+    <label id = "Username_Sign_Up_Label">Username</label>
+
+    <label id = "Password_Sign_Up_Label">Password</label>
+
+    <br>
+
+    <label id = "Label_Sign_Up">Sign Up: </label>
+
+    <input type="text" id="Username_Sign_Up" class="Fields">
+
+    <input type="password" id="Password_Sign_Up" class="Fields">
+
+    <button onclick="Sign_Up()" class="Buttons" id="Sign_Up">Sign Up</button>
+
+    <br>
+
+    <label id="Notice"></label>
+
+    </div>
+
+</body>
+
+<script type="text/javascript">
+
+	var SOCKET = io.connect('http://127.0.0.1:5000');
+
+	SOCKET.on('connect', function(){
+
+        console.log("Conencted to server!");
+
+    });
+
+    SOCKET.on('redirect', function(data){
+
+    	window.location = data.url;
+
+    })
+
+	function Log_In(){
+
+		console.log("Sending Login");
+
+    	SOCKET.emit('Log_In', {Username: document.getElementById("Username").value, Password: document.getElementById("Password").value});
+    	
+    }
+
+    SOCKET.on('failed_login', function failed(data){
+
+    	document.getElementById("Notice").innerHTML = data['notice'];
+
+    });
+
+    function Sign_Up(){
+
+    	SOCKET.emit('sign_up', {'account_name': document.getElementById("Username_Sign_Up").value, 'password': document.getElementById("Password_Sign_Up").value});
+
+    }
+
+</script>
+
+</html>

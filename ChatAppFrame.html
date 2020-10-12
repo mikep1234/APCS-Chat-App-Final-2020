@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.8/socket.io.min.js"></script>
+
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+
+    <meta charset="UTF-8">
+
+    <title>Chat App 2 Messaging</title>
+
+</head>
+
+<style type="text/css">
+
+	body{
+
+		background-color: #23272a;
+
+	}
+
+	#display{
+
+		position: absolute;
+
+		resize: none;
+
+		margin-left: 20vw;
+
+		font-size: 20px;
+
+		border: 1px solid #ccc;
+
+		width: 79vw;
+
+		height: 85vh;
+
+		color: #ffffff;
+
+		background-color: #2c2f33;
+
+		border-radius: 15px;
+
+	}
+
+	#typing_area{
+
+		position: absolute;
+
+		resize: none;
+
+		font-size: 20px;
+
+		color: #ffffff;
+
+		background-color: #2c2f33;
+
+		border: 1px solid #ccc;
+
+		margin-left: 20vw;
+
+		margin-top: 86vh;
+
+		height: 11vh;
+
+		width: 71vw;
+
+		border-radius: 15px;
+
+	}
+
+	#send_message{
+
+		font-size: 18pt;
+
+		position: absolute;
+
+		background-color: #2c2f33;
+
+		border: 1px solid #ccc;
+
+		color: #ffffff;
+
+		border-radius: 15px;
+
+		width: 7vw;
+
+		height: 12vh;
+
+		margin-left: 92vw;
+
+		margin-top: 86vh;
+
+	}
+
+	#send_message:hover{
+
+		background-color: #7289da;
+
+	}
+
+	#user_search{
+
+		font-size: 12pt;
+
+		position: absolute;
+
+		color: #ffffff;
+
+		background-color: #2c2f33;
+
+		border: 1px solid #ccc;
+
+		border-radius: 15px;
+
+		width: 275px;
+
+		height: 30px;
+
+	}
+
+	#user_search_submit{
+
+		font-size: 12pt;
+
+		position: absolute;
+
+		background-color: #2c2f33;
+
+		border: 1px solid #ccc;
+
+		color: #ffffff;
+
+		border-radius: 15px;
+
+		margin-left: 290px;
+
+		width: 75px;
+
+		height: 35px;
+
+	}
+
+	#user_search_submit:hover{
+
+		background-color: #7289da;
+
+	}
+
+	.User_List tbody{
+
+		overflow-y: auto;
+
+		position: absolute;
+
+		background-color: #2c2f33;
+
+		border: 1px solid #ccc;
+
+		border-radius: 12px;
+
+		margin-top: 40px;
+
+		padding-top: 10px;
+
+		height: 93%;
+
+		width:19%;
+
+	}
+
+	.User_List button{
+
+		font-size: 12pt;
+
+		background-color: #2c2f33;
+
+		color: #ffffff;
+
+		margin-left:15px;
+
+		margin-bottom: 20px;
+
+		border: 1px solid #ccc;
+
+		width: 335px;
+
+		height: 30px;
+
+		border-radius: 15px;
+		
+	}
+
+	.User_List button:hover{
+
+		background-color: #7289da;
+
+	}
+
+</style>
+
+<body>
+
+	<textarea readonly="true" id="display"> </textarea>
+
+	<input type="text" id="user_search">
+
+	<button id="user_search_submit" onclick="update_list()">Create</button>
+
+	<table class="User_List">
+
+		<tbody id="recent_list">
+
+		</tbody>
+
+	</table>
+
+	<textarea id="typing_area"></textarea>
+
+	<button id="send_message", onclick="send_message()">Send</button>
+
+</body>
+
+<script type="text/javascript">
+
+	var current = "";
+
+	var NAME = '{{name}}';
+
+	var friends = '{{friends}}'.substring(1, '{{friends}}'.length - 1).split(", ");
+
+	var SOCKET = io.connect('http://127.0.0.1:5000');
+
+	SOCKET.emit('re_auth', NAME);
+
+	load_friends();
+
+	function confirm_choice(id){
+
+		if(current != id){
+
+			SOCKET.emit('set_history', {'sender': current, 'DATA': collect_history(), 'name': NAME});
+
+			current = id;
+
+			document.getElementById("display").value = "";
+
+			SOCKET.emit('get_history', {'sender': current, 'name': NAME});
+
+		}
+
+		var x = collect_history();
+
+	}
+
+	function load_friends(){
+
+		let TABLE = document.getElementById("recent_list");
+
+		for (var i = friends.length - 1; i >= 0; i--) {
+
+			if("".localeCompare(friends[i])){
+
+				let newRow = TABLE.insertRow(0);
+
+  				let newCell = newRow.insertCell(0);
+
+  				let btn = document.createElement("button");
+
+  				btn.innerHTML = "Chat With " + friends[i];
+
+  				btn.setAttribute('id', String(friends[i]));
+
+  				btn.setAttribute('onClick', 'confirm_choice(this.id)');
+
+  				newCell.appendChild(btn);
+
+			}
+
+		}
+
+	}
+
+	function collect_history(){
+
+		let temp_text = document.getElementById("display").value;
+
+		let temp_list = temp_text.split("\n");
+
+		let to_return = "";
+
+		let br = 0;
+
+		for (var i = 0; i < temp_list.length; i++) {
+
+			if(br >= 1){
+
+				to_return += "\n" + temp_list[i];
+
+			}
+
+			else{
+
+				to_return += temp_list[i]
+
+			}
+
+			br+=1;
+
+		}
+
+		return to_return;
+
+	}
+
+	function update_list(){
+
+		SOCKET.emit('add_friend', {'name': NAME, 'target': document.getElementById("user_search").value});
+
+		let TABLE = document.getElementById("recent_list");
+
+  		for ( var i = 0; row = TABLE.rows[i]; i++ ) {
+
+    		row = TABLE.rows[i];
+
+     		for ( var j = 0; col = row.cells[j]; j++ ) {
+
+     			let x = String(col.firstChild.id);
+
+        		if(x.localeCompare(document.getElementById("user_search").value) == false){
+
+        			TABLE.deleteRow(i);
+
+        		}
+
+     		}
+
+  		}
+
+  		let newRow = TABLE.insertRow(0);
+
+  		let newCell = newRow.insertCell(0);
+
+  		let btn = document.createElement("button");
+
+  		btn.innerHTML = "Chat With " + document.getElementById("user_search").value;
+
+  		btn.setAttribute('id', String(document.getElementById("user_search").value));
+
+  		btn.setAttribute('onClick', 'confirm_choice(this.id)');
+
+  		newCell.appendChild(btn);
+
+	}
+	
+	function send_message(){
+
+		let d = new Date();
+
+		let spamcheck = true;
+
+		for (var i = 0; i <= document.getElementById("typing_area").value.length - 1; i++) {
+
+			if(isAlpha(document.getElementById("typing_area").value[i]) || isNum(document.getElementById("typing_area").value[i])){
+
+				spamcheck = false;
+
+			}
+
+		}
+
+		if(spamcheck == false && document.getElementById("typing_area").value.length >= 1){
+
+			SOCKET.emit('send_private_message', {'target': current, 'message': (document.getElementById("typing_area").value), 'sender': NAME, 'time': d})
+
+			document.getElementById("typing_area").value = "";
+
+		}
+
+	}
+
+	function isNum(s){
+
+		let list = new Array("0", "1", "2", "3", "4", "5", "6", "7", "8", "9");
+
+		for (var i = 0; i <= list.length - 1; i++) {
+
+			if(s.localeCompare(list[i])){
+
+				return true;
+
+			}
+
+		}
+
+		return false;
+
+	}
+
+	function isAlpha(s){
+
+		let list = new Array("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z");
+
+		for (var i = 0; i <= list.length - 1; i++) {
+
+			if(s.toLowerCase().localeCompare(list[i])){
+
+				return true;
+
+			}
+
+		}
+
+		return false;
+
+	}
+
+	SOCKET.on('new_private_message', function DISPLAY(data){
+
+		if(current == data['sender'] || data['sender'] == NAME){
+
+			document.getElementById("display").value = document.getElementById("display").value + "\n" + String(data['time']) + "     " + String(data['sender'] + ": " + data['message']);
+
+		}
+
+		else{
+
+			document.getElementById("display").value = document.getElementById("display").value + "\n" + data['sender'] + " is trying to message you!";
+
+		}
+
+	});
+
+	SOCKET.on('get_history', function history_set(param){
+
+		document.getElementById("display").value = String(param['data']);
+
+	});
+
+</script>
+
+</html>
